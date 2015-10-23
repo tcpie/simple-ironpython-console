@@ -8,7 +8,7 @@
     <ProjectGuid>{7FC9E142-5719-4F69-A6F6-57FF169E99AD}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>monotest</RootNamespace>
-    <AssemblyName>mono-test</AssemblyName>
+    <AssemblyName>simple-ironpython-console</AssemblyName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
