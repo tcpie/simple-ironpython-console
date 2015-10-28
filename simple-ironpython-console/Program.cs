@@ -13,7 +13,7 @@ namespace IronPythonConsole
 	{
 		private ScriptEngine engine;
 		private ScriptScope scope;
-		private dynamic autocomplete_fn;
+		// private dynamic autocomplete_fn;
 
 		private string script;
 		private string old_code;
@@ -22,6 +22,8 @@ namespace IronPythonConsole
 		private int line;
 
 		private string cmd_prefix;
+
+		private PythonAutoComplete autocompleter;
 
 		public IPConsole()
 		{
@@ -43,6 +45,7 @@ namespace IronPythonConsole
 
 			engine.SetSearchPaths(coll);
 
+			/*
 			try
 			{
 				scope.ImportModule("autocompletion");
@@ -54,6 +57,9 @@ namespace IronPythonConsole
 			{
 				Console.WriteLine(e.GetType().Name + ": " + e.Message);
 			}
+			*/
+
+			this.autocompleter = new PythonAutoComplete (this.engine, this.scope);
 		}
 
 		private void handle_backspace()
@@ -124,19 +130,24 @@ namespace IronPythonConsole
 		private void handle_tab()
 		{
 			try {
-				scope.SetVariable("ironpython_console_script_src", old_code + script);
+				AutocompleteInfo[] ret = this.autocompleter.GenerateCompletionData(script);
 
-				var arg1 = scope.GetVariable("ironpython_console_script_src");
-				string ret = (string)engine.Operations.Invoke(autocomplete_fn, arg1, line, script.Length);
+				if (ret.Length == 0)
+					return;
 
-				if (ret.Contains("\n"))
+				if (ret.Length == 1)
 				{
-					Console.Write("\n" + ret + "\n>> " + script);
-				}
-				else
-				{
-					Console.Write(ret);
-					script += ret;
+					Console.Write(ret[0].complete);
+					script += ret[0].complete;
+				} else {
+					Console.Write("\n");
+					foreach (AutocompleteInfo aci in ret)
+					{
+						Console.WriteLine(aci.stub);
+					}
+
+					Console.Write(this.cmd_prefix + script + ret[0].common_starter_complete);
+					script += ret[0].common_starter_complete;
 				}
 			}
 			catch (System.Exception e)
