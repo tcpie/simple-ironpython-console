@@ -225,11 +225,21 @@ namespace IronPythonConsole
 			AutocompleteInput ret = new AutocompleteInput ();
 
 			string text = input.Replace("\t", "   ");
-			int startIndex = text.LastIndexOf(' ');
+
+            char[] start_index_chars = {' ', '(', '-', '+', ',', '*', '=', '&'};
+
+            int startIndex = -1;
+
+            foreach (char c in start_index_chars)
+            {
+                int temp_index = text.LastIndexOf(c);
+
+                if (temp_index > startIndex)
+                    startIndex = temp_index;
+            }
+
 			int end_index = input.LastIndexOf ('.');
-
-			// Console.WriteLine ("startIndex: " + startIndex.ToString () + " end index: " + end_index.ToString ());
-
+            
 			if (end_index == -1) {
 				ret.name = string.Empty;
 				ret.filter = input.Substring(startIndex + 1);

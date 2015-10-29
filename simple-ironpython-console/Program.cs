@@ -13,7 +13,6 @@ namespace IronPythonConsole
 	{
 		private ScriptEngine engine;
 		private ScriptScope scope;
-		// private dynamic autocomplete_fn;
 
 		private string script;
 		private string old_code;
@@ -22,17 +21,21 @@ namespace IronPythonConsole
 		private int line;
 
 		private string cmd_prefix;
+        private string new_cmd_line_prefix;
+        private string identation_indicator;
 
 		private PythonAutoComplete autocompleter;
-
+        
 		public IPConsole()
 		{
-			script = "";
+            script = "";
 			old_code = "";
 			old_entries = new List<string>();
 			old_entry_num = 0;
 			line = 1;
 			cmd_prefix = ">>> ";
+            new_cmd_line_prefix = "....";
+            identation_indicator = "....";
 
 			engine = Python.CreateEngine ();
 			scope = engine.CreateScope ();
@@ -44,21 +47,7 @@ namespace IronPythonConsole
 			coll.Add("./ipython-dlls");
 
 			engine.SetSearchPaths(coll);
-
-			/*
-			try
-			{
-				scope.ImportModule("autocompletion");
-
-				ScriptScope autocomplete_scope = scope.GetVariable ("autocompletion");
-				autocomplete_fn = autocomplete_scope.GetVariable ("get_autocompletion");
-			}
-			catch (System.Exception e)
-			{
-				Console.WriteLine(e.GetType().Name + ": " + e.Message);
-			}
-			*/
-
+            
 			this.autocompleter = new PythonAutoComplete (this.engine, this.scope);
 		}
 
@@ -68,7 +57,7 @@ namespace IronPythonConsole
 				return;
 
 			script = script.Remove(script.Length - 1);
-			Console.Write("\b");
+			Console.Write("\b \b");
 		}
 
 		private void handle_up_or_downarrow()
@@ -167,7 +156,7 @@ namespace IronPythonConsole
 			do
 			{
 				keyinfo = Console.ReadKey(true);
-
+                
 				if (keyinfo.Key == ConsoleKey.Backspace)
 				{
 					this.handle_backspace();
@@ -180,20 +169,38 @@ namespace IronPythonConsole
 				{
 					this.handle_downarrow();
 				}
-				else if (keyinfo.Key == ConsoleKey.Enter)
+				else if (keyinfo.Key == ConsoleKey.Enter && (keyinfo.Modifiers & ConsoleModifiers.Shift) == 0)
 				{
 					this.handle_enter();
 				} 
-				else if (keyinfo.Key == ConsoleKey.Tab)
+				else if (keyinfo.Key == ConsoleKey.Tab && (keyinfo.Modifiers & ConsoleModifiers.Shift) == 0)
 				{
 					this.handle_tab();
 				} 
-				else 
+                else if (keyinfo.Key == ConsoleKey.Enter)
+                {
+                    Console.Write(Environment.NewLine + this.new_cmd_line_prefix);
+                    script += "\n";
+                }
+				else if (keyinfo.Key == ConsoleKey.Tab)
 				{
-					Console.Write(keyinfo.KeyChar);
-
-					script += keyinfo.KeyChar;
-				}
+                    string script_trim_res = script.Substring(script.LastIndexOf('\n') + 1).Trim();
+                    if (script_trim_res == string.Empty)
+                        Console.Write(this.identation_indicator);
+                    else
+                        Console.Write("    ");
+                    
+                    script += "    ";
+                }
+                else if (keyinfo.KeyChar == '\0')
+                {
+                    continue;
+                }
+                else
+                {
+                    Console.Write(keyinfo.KeyChar);
+                    script += keyinfo.KeyChar;
+                }
 			}
 			while (keyinfo.Key != ConsoleKey.Escape);
 		}
